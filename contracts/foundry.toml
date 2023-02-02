@@ -1,0 +1,22 @@
+# Full reference https://github.com/foundry-rs/foundry/tree/master/config
+
+[profile.default]
+auto_detect_solc = false
+bytecode_hash = "none"
+fuzz = { runs = 256 }
+gas_reports = ["*"]
+libs = ["lib"]
+out = "out"
+solc = "0.8.15"
+src = "src"
+test = "test"
+
+[profile.default.optimizer_details]
+optimizer = true
+optimizer_runs = 10_000
+constantOptimizer = true
+yul = true
+
+[profile.ci]
+fuzz = { runs = 1_000 }
+verbosity = 4

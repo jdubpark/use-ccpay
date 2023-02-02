@@ -1,0 +1,7 @@
+{
+  "watch": ["src/**/*.ts", ".env"],
+  "ext": ".ts,.js,.env",
+  "verbose": false,
+  "ignore": [],
+  "exec": "ts-node -r tsconfig-paths/register --files src/index.ts"
+}
