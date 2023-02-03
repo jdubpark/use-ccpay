@@ -14,8 +14,8 @@ export const whBridgeAddresses: { [chainId: number]: { [type: string]: string } 
 }
 
 export const ccPayAddresses: { [chainId: number]: string } = {
-	5: '0x8da84e7D72D8F786b05c0DDE9f0a15389372a0BE',
-	80001: '0xD4278889A1a2307356D6C220C88785e5d34F1d44',
+	5: '0x5B109922066792a96Fe3FFC20af19D98AEf1efB0',
+	80001: '0x24c1B2EB3ccE1aDC9A66dA2607a6d7D32F011DDB',
 }
 
 export const wormholeChainIds: { [chainId: number]: number } = {

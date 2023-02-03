@@ -1,9 +1,9 @@
+import axios from "axios";
 import {BigNumber, constants, Contract, providers, utils} from 'ethers'
 import {useEffect, useRef, useCallback, useState} from 'react'
 import {useAccount, useChainId, useContractRead, useProvider, useSigner} from 'wagmi'
-import ERC20PermitNonceABI from "../abis/erc20permit-nonce.json";
-import ApiService from "../api";
-// import { verifyMessage } from 'ethers/lib/utils'
+
+import {CCPayContract, CCPayChainReverse} from "../constants/wormhole";
 
 interface DomainSeparator {
   name: string,
@@ -11,6 +11,28 @@ interface DomainSeparator {
   chainId: number,
   verifyingContract: string,
 }
+
+const ERC20PermitNonceABI = [
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "nonces",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
 
 const ERC20ABI = [
   {
@@ -42,7 +64,7 @@ const ERC20ABI = [
 ]
 
 export interface CCPayProps {
-  spender: string,
+  // receiver: string,
   tokenName?: string, // optional, if not provided, will be fetched from the contract address (wallet has to be connected to the right chain)
   tokenAddress: string,
   // account: string, // address of the user
@@ -50,6 +72,13 @@ export interface CCPayProps {
   // domainSeparatorVersion: string,
   deadline: string, // permit deadline in ms (after the deadline, permit signature is invalid)
   params: [string, string, string], // params passed onto API
+  relayer: string,
+}
+
+export interface CCPayRes {
+  signedMessage: CCPaySignedMessaged,
+  doSignAndPay: () => void,
+  srcTxHash: string
 }
 
 interface CCPayMessage {
@@ -123,12 +152,12 @@ const send = (signer: providers.JsonRpcSigner, method: string, params: any[]) =>
     .then((r: any) => resolve(r))
     .catch((e: any) => reject(e))
 })
-function useCCPay(props: CCPayProps) {
+function useCCPay(props: CCPayProps): CCPayRes {
   const provider = useProvider()
   const { data: signer } = useSigner()
   const { address: account } = useAccount()
   const fromChainId = useChainId()
-  const { data: tokenName, isError, isLoading } = useContractRead({
+  const { data: tokenName } = useContractRead({
     address: utils.isAddress(props.tokenAddress) ? props.tokenAddress : constants.AddressZero,
     abi: ERC20ABI,
     functionName: 'name',
@@ -142,12 +171,15 @@ function useCCPay(props: CCPayProps) {
   })
   // NOTE: For this demo, we fix the destination chain to Polygon Mumbai
   const [toChainId] = useState<number>(80001)
+  const [srcTxHash, setSrcTxHash] = useState<string>('')
 
   useEffect(() => {
     // console.log(provider, account, tokenName, signer)
     // console.log(account, props.spender, props.tokenAddress)
     if (!provider || !account || !tokenName || !signer) return // props.deadline <= Date.now().toString(16)
-    if ([account, props.spender, props.tokenAddress].map(utils.isAddress).includes(false)) return
+    if ([account, props.tokenAddress].map(utils.isAddress).includes(false)) return
+
+    const spender = CCPayContract[CCPayChainReverse[fromChainId]]
 
     const signMessageFn = async () => {
       const amount = utils.parseUnits(
@@ -158,7 +190,7 @@ function useCCPay(props: CCPayProps) {
 
       message.current = {
         owner: account,
-        spender: props.spender, // spender of the permit sig (receiving contract)
+        spender, // spender of the permit sig (CCPay contract on the source chain)
         value: amount,
         nonce: await getNonce(provider as providers.JsonRpcProvider, props.tokenAddress, account),
         deadline: props.deadline, // permit signature lifetime
@@ -198,24 +230,29 @@ function useCCPay(props: CCPayProps) {
       })
   }, [typedData, signer])
 
-  const payWithSignature = useCallback(async (inpAddress: string, inpAmount: string, inpOptTag: string, signature: string) => {
-    const res = await ApiService.postAcceptSignature({
-      payer: account as string,
-      paidContractAddress: inpAddress,
-      paymentTokenAddress: props.tokenAddress,
-      paymentAmount: inpAmount,
-      optionalTag: inpOptTag,
-      signature,
-      fromChainId,
-      toChainId,
-    })
-    console.log(res)
-  }, [account, fromChainId, props.tokenAddress, toChainId])
+  const payWithSignature = useCallback(async (spender: string, inpAddress: string, inpAmount: string, inpOptTag: string, signature: string) => {
+    const res = await axios.post(
+      `${props.relayer.endsWith('/') ? props.relayer.slice(0, props.relayer.length-2) : props.relayer}/relayer/accept-signature`,
+      {
+        payer: account as string,
+        receiver: inpAddress,
+        ccPayAddress: spender,
+        paymentTokenAddress: props.tokenAddress,
+        paymentAmount: inpAmount,
+        optionalTag: inpOptTag,
+        signature,
+        fromChainId,
+        toChainId,
+      },
+    )
+    // console.log(res.data)
+    setSrcTxHash(res.data.data as string)
+  }, [account, fromChainId, props.relayer, props.tokenAddress, toChainId])
 
   const doSignAndPay = useCallback(async () => {
     const signedMessageRaw = await signMessage() as string
     if (!signedMessageRaw) return
-    console.log(signedMessageRaw)
+    // console.log(signedMessageRaw)
 
     setSignedMessage({
       full: signedMessageRaw || '', // concat of v, r, s
@@ -223,12 +260,13 @@ function useCCPay(props: CCPayProps) {
     })
 
     await payWithSignature(
+      CCPayContract[CCPayChainReverse[fromChainId]], // cc pay contract for spending on behalf of user (bridging to target chain)
       ...props.params,
       signedMessageRaw,
     )
-  }, [payWithSignature, signMessage, props.params])
+  }, [signMessage, payWithSignature, fromChainId, props.params])
 
-  return { signedMessage, doSignAndPay }
+  return { signedMessage, doSignAndPay, srcTxHash }
 }
 
 export default useCCPay

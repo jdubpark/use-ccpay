@@ -5,13 +5,15 @@ import { BigNumber, constants, Contract, ethers, utils } from 'ethers'
 import { acceptSignatureBody, deliverVaaBody } from '../../types/request/relayer'
 import { CCPay__factory } from '../../types/contracts'
 import permitABI from '../../scripts/erc20permit-abi.json'
-import { ccPayAddresses, signers, wormholeChainIds } from '@bhcs/constants'
+import { ccPayAddresses, signers, wormholeChainIds } from '../../constants'
+import db from '../../database'
 
 export default class RelayerServices {
-	static async acceptSignature(params: acceptSignatureBody): Promise<ethers.ContractReceipt> {
+	static async acceptSignature(params: acceptSignatureBody): Promise<string> {
 		const {
 			payer,
-			paidContractAddress,
+			receiver,
+			ccPayAddress,
 			paymentTokenAddress,
 			paymentAmount,
 			optionalTag,
@@ -19,6 +21,8 @@ export default class RelayerServices {
 			fromChainId,
 			toChainId,
 		} = params
+
+		console.log(params)
 
 		// const whFromChainId = wormholeChainIds[fromChainId]
 		const whToChainId = wormholeChainIds[toChainId]
@@ -32,7 +36,7 @@ export default class RelayerServices {
 		const ccPay = CCPay__factory.connect(ccPayAddresses[fromChainId], signers[fromChainId])
 		const receiptId = crypto
 			.createHash('sha256')
-			.update(`${payer}${fromChainId}${paymentAmount}${sigFull}`)
+			.update(`${payer}${fromChainId}${paymentAmount}${sigFull}${Date.now()}`)
 			.digest('hex')
 
 		// decimal precision multiplication is done server-side
@@ -41,6 +45,7 @@ export default class RelayerServices {
 		const tx = await ccPay.makePaymentFromSource(
 			paymentTokenAddress, // TODO: fixed at USDC
 			payer,
+			`0x${getEmitterAddressEth(receiver)}`, // Wormhole-compatible address
 			paymentAmountAdj,
 			constants.MaxUint256,
 			sig.v,
@@ -48,36 +53,45 @@ export default class RelayerServices {
 			sig.s,
 			// Wormhole-related params
 			whToChainId,
-			`0x${getEmitterAddressEth(paidContractAddress)}`, // Wormhole-compatible address
+			`0x${getEmitterAddressEth(ccPayAddress)}`, // Wormhole-compatible address
 			`0x${receiptId}`,
-			optionalTag || '0x',
+			utils.hexlify(utils.toUtf8Bytes(optionalTag)) || '0x',
 			{
 				gasLimit: 2_000_000,
 			},
 		)
 
-		console.log('tx', tx.hash)
-		const txReceipt = await tx.wait()
-		// console.log(txReceipt)
+		db.run('INSERT INTO Logs VALUES (?, ?, ?, ?, ?, ?, ?)', [
+			tx.hash,
+			null,
+			'2',
+			receiptId,
+			optionalTag,
+			fromChainId,
+			toChainId,
+		])
 
-		return txReceipt
+		// console.log('tx', tx.hash)
+		// const txReceipt = await tx.wait()
+		// console.log(txReceipt)
+		return tx.hash
 	}
 
-	static async deliverVaa(params: deliverVaaBody): Promise<ethers.ContractReceipt> {
-		const { vaa, toChainId } = params
-		console.log('vaa', vaa)
-		console.log('toChainId', toChainId)
-		console.log(ccPayAddresses[toChainId])
-
-		const ccPay = CCPay__factory.connect(ccPayAddresses[toChainId], signers[toChainId])
-		const tx = await ccPay.receivePaymentOnTarget(vaa, {
-			gasLimit: 2_000_000,
-		})
-
-		console.log('tx', tx.hash)
-		const txReceipt = await tx.wait()
-		// console.log(txReceipt)
-
-		return txReceipt
-	}
+	// static async deliverVaa(params: deliverVaaBody): Promise<ethers.ContractReceipt> {
+	// 	const { vaa, toChainId } = params
+	// 	console.log('vaa', vaa)
+	// 	console.log('toChainId', toChainId)
+	// 	console.log(ccPayAddresses[toChainId])
+	//
+	// 	const ccPay = CCPay__factory.connect(ccPayAddresses[toChainId], signers[toChainId])
+	// 	const tx = await ccPay.receivePaymentOnTarget(vaa, {
+	// 		gasLimit: 2_000_000,
+	// 	})
+	//
+	// 	console.log('tx', tx.hash)
+	// 	const txReceipt = await tx.wait()
+	// 	// console.log(txReceipt)
+	//
+	// 	return txReceipt
+	// }
 }

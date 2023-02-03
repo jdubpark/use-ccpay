@@ -51,7 +51,7 @@ async function fetchVaa(fromChainId: number, tx: ethers.ContractReceipt) {
 
 async function main() {
 	const fromChainId = 5
-	const txHash = '0x3450a05e5384ea3ffb6b03ef0532b2bc53bde9353225a7f765a1f3b7df1d33c1'
+	const txHash = '0x1cd93882e0a4cb55b89f22e5bc4e11496a389280b099ca4b4ec58452baa6c432' // 0x86fb1d08e45dbd6b299348cfca1d3b2e7dffc5ad276f2ac2c048029435c295de
 	const receipt = await signers[fromChainId].provider.getTransactionReceipt(txHash)
 
 	if (!receipt) throw new Error('No receipt found')

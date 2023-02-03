@@ -1,6 +1,7 @@
 export interface acceptSignatureBody {
 	payer: string
-	paidContractAddress: string
+	receiver: string
+	ccPayAddress: string
 	paymentTokenAddress: string
 	paymentAmount: string
 	optionalTag: string

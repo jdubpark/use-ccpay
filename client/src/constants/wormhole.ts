@@ -8,7 +8,17 @@ export enum WormholeTokenBridge {
   MUMBAI = '0x377D55a7928c046E18eEbb61977e714d2a76472a',
 }
 
-export enum CCPayerAddress {
-  GOERLI = '0x8da84e7D72D8F786b05c0DDE9f0a15389372a0BE',
-  MUMBAI = '0xD4278889A1a2307356D6C220C88785e5d34F1d44',
+export enum CCPayChain {
+  GOERLI = 5,
+  MUMBAI = 80001,
+}
+
+export const CCPayContract: { [key in CCPayChain]: string } = {
+  5: '0x877E81000471c7297e4405366cDC30b23B728661',
+  80001: '0xca92f55a294e41d9085258ccb5e203440fd32a85',
+}
+
+export const CCPayChainReverse: { [key: string]: CCPayChain } = {
+  5: CCPayChain.GOERLI,
+  80001: CCPayChain.MUMBAI,
 }

@@ -33,7 +33,7 @@ export interface CCPayInterface extends utils.Interface {
     "TOKEN_BRIDGE()": FunctionFragment;
     "TOKEN_BRIDGE_ADDRESS()": FunctionFragment;
     "changePaymentToken(address)": FunctionFragment;
-    "makePaymentFromSource(address,address,uint256,uint256,uint8,bytes32,bytes32,uint16,bytes32,bytes32,bytes)": FunctionFragment;
+    "makePaymentFromSource(address,address,bytes32,uint256,uint256,uint8,bytes32,bytes32,uint16,bytes32,bytes32,bytes)": FunctionFragment;
     "owner()": FunctionFragment;
     "paymentToken()": FunctionFragment;
     "receivePaymentOnTarget(bytes)": FunctionFragment;
@@ -76,6 +76,7 @@ export interface CCPayInterface extends utils.Interface {
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
+      PromiseOrValue<BytesLike>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
@@ -145,8 +146,8 @@ export interface CCPayInterface extends utils.Interface {
 
   events: {
     "OwnershipTransferred(address,address)": EventFragment;
-    "PaymentReceived(uint16,bytes32,address,uint256,bytes32)": EventFragment;
-    "PaymentSent(uint16,bytes32,address,uint256,bytes32)": EventFragment;
+    "PaymentReceived(uint16,address,address,uint256,bytes32)": EventFragment;
+    "PaymentSent(uint16,address,address,uint256,bytes32)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
@@ -235,6 +236,7 @@ export interface CCPay extends BaseContract {
     makePaymentFromSource(
       token: PromiseOrValue<string>,
       owner: PromiseOrValue<string>,
+      receiver: PromiseOrValue<BytesLike>,
       permitValue: PromiseOrValue<BigNumberish>,
       deadline: PromiseOrValue<BigNumberish>,
       v: PromiseOrValue<BigNumberish>,
@@ -280,6 +282,7 @@ export interface CCPay extends BaseContract {
   makePaymentFromSource(
     token: PromiseOrValue<string>,
     owner: PromiseOrValue<string>,
+    receiver: PromiseOrValue<BytesLike>,
     permitValue: PromiseOrValue<BigNumberish>,
     deadline: PromiseOrValue<BigNumberish>,
     v: PromiseOrValue<BigNumberish>,
@@ -325,6 +328,7 @@ export interface CCPay extends BaseContract {
     makePaymentFromSource(
       token: PromiseOrValue<string>,
       owner: PromiseOrValue<string>,
+      receiver: PromiseOrValue<BytesLike>,
       permitValue: PromiseOrValue<BigNumberish>,
       deadline: PromiseOrValue<BigNumberish>,
       v: PromiseOrValue<BigNumberish>,
@@ -364,7 +368,7 @@ export interface CCPay extends BaseContract {
       newOwner?: PromiseOrValue<string> | null
     ): OwnershipTransferredEventFilter;
 
-    "PaymentReceived(uint16,bytes32,address,uint256,bytes32)"(
+    "PaymentReceived(uint16,address,address,uint256,bytes32)"(
       _recipientChainId?: null,
       _recipientContractAddress?: null,
       _paymentToken?: null,
@@ -379,7 +383,7 @@ export interface CCPay extends BaseContract {
       _receiptId?: null
     ): PaymentReceivedEventFilter;
 
-    "PaymentSent(uint16,bytes32,address,uint256,bytes32)"(
+    "PaymentSent(uint16,address,address,uint256,bytes32)"(
       _recipientChainId?: null,
       _recipientContractAddress?: null,
       _paymentToken?: null,
@@ -410,6 +414,7 @@ export interface CCPay extends BaseContract {
     makePaymentFromSource(
       token: PromiseOrValue<string>,
       owner: PromiseOrValue<string>,
+      receiver: PromiseOrValue<BytesLike>,
       permitValue: PromiseOrValue<BigNumberish>,
       deadline: PromiseOrValue<BigNumberish>,
       v: PromiseOrValue<BigNumberish>,
@@ -460,6 +465,7 @@ export interface CCPay extends BaseContract {
     makePaymentFromSource(
       token: PromiseOrValue<string>,
       owner: PromiseOrValue<string>,
+      receiver: PromiseOrValue<BytesLike>,
       permitValue: PromiseOrValue<BigNumberish>,
       deadline: PromiseOrValue<BigNumberish>,
       v: PromiseOrValue<BigNumberish>,

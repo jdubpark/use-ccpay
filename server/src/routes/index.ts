@@ -14,10 +14,10 @@ router.post(
 	RelayerController.acceptSignature,
 )
 
-router.post(
-	'/relayer/deliver-vaa',
-	// celebrate(RelayerValidator.deliverVaa),
-	RelayerController.deliverVaa,
-)
+// router.post(
+// 	'/relayer/deliver-vaa',
+// 	// celebrate(RelayerValidator.deliverVaa),
+// 	RelayerController.deliverVaa,
+// )
 
 export default router

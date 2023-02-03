@@ -12,22 +12,22 @@ export default class RelayerController {
 	) => {
 		try {
 			// const { paidContractAddress, paymentAmount, optionalTag } = req.body
-			const receipt = await RelayerServices.acceptSignature(req.body)
+			const txHash = await RelayerServices.acceptSignature(req.body)
 
-			res.status(OK).json(apiResponse(receipt))
+			res.status(OK).json(apiResponse(txHash))
 		} catch (error) {
 			next(error)
 		}
 	}
 
-	static deliverVaa = async (req: ExpReq<null, deliverVaaBody>, res: ExpRes, next: ExpNextFn) => {
-		try {
-			// const { vaa, toChainId } = req.body
-			const receipt = await RelayerServices.deliverVaa(req.body)
-
-			res.status(OK).json(apiResponse(receipt))
-		} catch (error) {
-			next(error)
-		}
-	}
+	// static deliverVaa = async (req: ExpReq<null, deliverVaaBody>, res: ExpRes, next: ExpNextFn) => {
+	// 	try {
+	// 		// const { vaa, toChainId } = req.body
+	// 		const receipt = await RelayerServices.deliverVaa(req.body)
+	//
+	// 		res.status(OK).json(apiResponse(receipt))
+	// 	} catch (error) {
+	// 		next(error)
+	// 	}
+	// }
 }

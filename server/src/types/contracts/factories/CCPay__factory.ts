@@ -58,9 +58,9 @@ const _abi = [
       },
       {
         indexed: false,
-        internalType: "bytes32",
+        internalType: "address",
         name: "_recipientContractAddress",
-        type: "bytes32",
+        type: "address",
       },
       {
         indexed: false,
@@ -95,9 +95,9 @@ const _abi = [
       },
       {
         indexed: false,
-        internalType: "bytes32",
+        internalType: "address",
         name: "_recipientContractAddress",
-        type: "bytes32",
+        type: "address",
       },
       {
         indexed: false,
@@ -188,6 +188,11 @@ const _abi = [
         internalType: "address",
         name: "owner",
         type: "address",
+      },
+      {
+        internalType: "bytes32",
+        name: "receiver",
+        type: "bytes32",
       },
       {
         internalType: "uint256",
